@@ -108,7 +108,7 @@ class StorageManager {
     value: OmniverseDB[T]['value']
   ): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    await this.db.put(store as string, value);
+    await this.db.put(store as any, value);
   }
 
   async get<T extends keyof OmniverseDB>(
@@ -116,14 +116,14 @@ class StorageManager {
     key: string
   ): Promise<OmniverseDB[T]['value'] | undefined> {
     if (!this.db) throw new Error('Database not initialized');
-    return await this.db.get(store as string, key);
+    return await this.db.get(store as any, key);
   }
 
   async getAll<T extends keyof OmniverseDB>(
     store: T
   ): Promise<OmniverseDB[T]['value'][]> {
     if (!this.db) throw new Error('Database not initialized');
-    return await this.db.getAll(store as string);
+    return await this.db.getAll(store as any);
   }
 
   async delete<T extends keyof OmniverseDB>(
@@ -131,7 +131,7 @@ class StorageManager {
     key: string
   ): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    await this.db.delete(store as string, key);
+    await this.db.delete(store as any, key);
   }
 
   async clear<T extends keyof OmniverseDB>(store: T): Promise<void> {
