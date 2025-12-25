@@ -4,6 +4,13 @@ import { useRef, useEffect, useState } from 'react';
 import type { AppWindow } from '@kernel/types';
 import { Minus, Square, X } from 'lucide-react';
 
+// Import app components
+import FileExplorer from './apps/FileExplorer';
+import TextEditor from './apps/TextEditor';
+import Terminal from './apps/Terminal';
+import Calculator from './apps/Calculator';
+import TaskManager from './apps/TaskManager';
+
 interface WindowProps {
   window: AppWindow;
   onClose: () => void;
@@ -11,6 +18,18 @@ interface WindowProps {
   onMinimize: () => void;
   onMaximize: () => void;
 }
+
+// Map app names to components
+const AppComponents: Record<string, React.ComponentType<any>> = {
+  'File Explorer': FileExplorer,
+  'Text Editor': TextEditor,
+  'Terminal': Terminal,
+  'Calculator': Calculator,
+  'Task Manager': TaskManager,
+  'Wallet': () => <div className="p-8 text-center text-gray-400">💰 Wallet - Coming Soon</div>,
+  'AI Assistant': () => <div className="p-8 text-center text-gray-400">🤖 AI Assistant - Coming Soon</div>,
+  'Settings': () => <div className="p-8 text-center text-gray-400">⚙️ Settings - Coming Soon</div>,
+};
 
 export default function Window({
   window,
@@ -127,21 +146,21 @@ export default function Window({
 
       {/* Content */}
       <div className="window-content">
-        <WindowContent window={window} />
-      </div>
-    </div>
-  );
-}
-
-function WindowContent({ window }: { window: AppWindow }) {
-  // Placeholder content based on app
-  return (
-    <div className="h-full flex items-center justify-center text-gray-400">
-      <div className="text-center">
-        <p className="text-4xl mb-4">🚧</p>
-        <p className="text-lg mb-2">{window.title}</p>
-        <p className="text-sm">App interface coming soon...</p>
-        <p className="text-xs mt-4 text-gray-600">Window ID: {window.id}</p>
+        {(() => {
+          const AppComponent = AppComponents[window.title];
+          if (AppComponent) {
+            return <AppComponent />;
+          }
+          return (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📦</div>
+                <div className="text-lg">{window.title}</div>
+                <div className="text-sm opacity-50">Coming Soon</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

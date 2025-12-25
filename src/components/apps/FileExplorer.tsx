@@ -1,0 +1,236 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Folder, File, Download, Upload, Trash2, Edit, Plus, Search } from 'lucide-react';
+import { vfs } from '@/kernel/filesystem';
+import type { FileNode } from '@/kernel/types';
+
+export default function FileExplorer() {
+  const [currentPath, setCurrentPath] = useState('/home/demo-user');
+  const [files, setFiles] = useState<FileNode[]>([]);
+  const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNewDialog, setShowNewDialog] = useState<'file' | 'folder' | null>(null);
+  const [newName, setNewName] = useState('');
+
+  useEffect(() => {
+    loadDirectory(currentPath);
+  }, [currentPath]);
+
+  const loadDirectory = async (path: string) => {
+    try {
+      const items = await vfs.listDirectory(path);
+      setFiles(items);
+    } catch (error) {
+      console.error('Failed to load directory:', error);
+    }
+  };
+
+  const navigateTo = (path: string) => {
+    setCurrentPath(path);
+    setSelectedFile(null);
+  };
+
+  const goUp = () => {
+    const parts = currentPath.split('/').filter(p => p);
+    parts.pop();
+    const newPath = '/' + parts.join('/');
+    navigateTo(newPath || '/');
+  };
+
+  const createNew = async () => {
+    if (!newName.trim()) return;
+    
+    try {
+      if (showNewDialog === 'folder') {
+        await vfs.createDirectory(currentPath, newName);
+      } else if (showNewDialog === 'file') {
+        await vfs.createFile(currentPath, newName, '');
+      }
+      setShowNewDialog(null);
+      setNewName('');
+      loadDirectory(currentPath);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const deleteFile = async (file: FileNode) => {
+    if (!confirm(`Delete ${file.name}?`)) return;
+    
+    try {
+      await vfs.deleteFile(file.path);
+      loadDirectory(currentPath);
+      setSelectedFile(null);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const downloadFile = async (file: FileNode) => {
+    if (file.type === 'directory') return;
+    
+    try {
+      const content = await vfs.readFile(file.path);
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const filteredFiles = files.filter(f => 
+    f.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="flex flex-col h-full bg-gray-900 text-white">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 p-2 bg-gray-800 border-b border-gray-700">
+        <button
+          onClick={goUp}
+          disabled={currentPath === '/'}
+          className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
+        >
+          ← Back
+        </button>
+        
+        <div className="flex-1 flex items-center gap-2 bg-gray-700 px-3 py-1 rounded">
+          <Folder size={16} />
+          <input
+            type="text"
+            value={currentPath}
+            onChange={(e) => navigateTo(e.target.value)}
+            className="flex-1 bg-transparent outline-none"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded">
+          <Search size={16} />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-32 bg-transparent outline-none"
+          />
+        </div>
+
+        <button
+          onClick={() => setShowNewDialog('folder')}
+          className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-500 flex items-center gap-1"
+        >
+          <Plus size={16} /> Folder
+        </button>
+        
+        <button
+          onClick={() => setShowNewDialog('file')}
+          className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 flex items-center gap-1"
+        >
+          <Plus size={16} /> File
+        </button>
+      </div>
+
+      {/* New Item Dialog */}
+      {showNewDialog && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+          <div className="bg-gray-800 p-4 rounded-lg w-80">
+            <h3 className="text-lg font-bold mb-3">
+              Create New {showNewDialog === 'folder' ? 'Folder' : 'File'}
+            </h3>
+            <input
+              type="text"
+              placeholder="Name..."
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && createNew()}
+              className="w-full px-3 py-2 bg-gray-700 rounded mb-3"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={createNew}
+                className="flex-1 px-3 py-2 bg-blue-600 rounded hover:bg-blue-500"
+              >
+                Create
+              </button>
+              <button
+                onClick={() => { setShowNewDialog(null); setNewName(''); }}
+                className="flex-1 px-3 py-2 bg-gray-600 rounded hover:bg-gray-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File List */}
+      <div className="flex-1 overflow-auto p-2">
+        <div className="grid grid-cols-4 gap-2">
+          {filteredFiles.map((file) => (
+            <div
+              key={file.id}
+              onClick={() => {
+                if (file.type === 'directory') {
+                  navigateTo(file.path);
+                } else {
+                  setSelectedFile(file);
+                }
+              }}
+              className={`p-3 rounded cursor-pointer flex flex-col items-center gap-2 ${
+                selectedFile?.id === file.id
+                  ? 'bg-blue-600'
+                  : 'bg-gray-800 hover:bg-gray-700'
+              }`}
+            >
+              {file.type === 'directory' ? (
+                <Folder size={32} className="text-yellow-400" />
+              ) : (
+                <File size={32} className="text-blue-400" />
+              )}
+              <span className="text-sm text-center truncate w-full">
+                {file.name}
+              </span>
+              <span className="text-xs text-gray-400">
+                {file.type === 'file' ? `${file.size} bytes` : 'Folder'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {filteredFiles.length === 0 && (
+          <div className="text-center text-gray-500 mt-8">
+            {searchQuery ? 'No files found' : 'Empty folder'}
+          </div>
+        )}
+      </div>
+
+      {/* Status Bar */}
+      <div className="flex items-center justify-between p-2 bg-gray-800 border-t border-gray-700 text-sm">
+        <span>{filteredFiles.length} items</span>
+        {selectedFile && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => downloadFile(selectedFile)}
+              className="px-2 py-1 bg-blue-600 rounded hover:bg-blue-500 flex items-center gap-1"
+            >
+              <Download size={14} /> Download
+            </button>
+            <button
+              onClick={() => deleteFile(selectedFile)}
+              className="px-2 py-1 bg-red-600 rounded hover:bg-red-500 flex items-center gap-1"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
