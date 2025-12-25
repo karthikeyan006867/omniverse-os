@@ -28,8 +28,8 @@ export class VirtualFileSystem {
     const root = await this.getByPath('/');
     
     if (!root) {
-      // Create root directory
-      await this.createDirectory('/', 'root', {
+      // Create root directory (special case - no parent needed)
+      await this.createDirectory('', '/', {
         owner: 'system',
         read: ['*'],
         write: ['system'],
@@ -63,21 +63,43 @@ export class VirtualFileSystem {
     name: string,
     permissions?: FilePermissions
   ): Promise<DirectoryNode> {
-    const parent = await this.getByPath(parentPath);
+    const path = this.joinPath(parentPath, name);
     
+    // Check if already exists
+    const existing = await this.getByPath(path);
+    if (existing) {
+      throw new Error(`Directory already exists: ${path}`);
+    }
+
+    // Special case for root directory
+    if (path === '/') {
+      const root: DirectoryNode = {
+        id: 'root',
+        name: '/',
+        type: 'directory',
+        path: '/',
+        parentId: '',
+        size: 0,
+        children: [],
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        permissions: permissions || this.getDefaultPermissions(),
+        metadata: {},
+      };
+      await storage.set('files', root);
+      this.cache.set(root.id, root);
+      this.cache.set(path, root);
+      return root;
+    }
+
+    // For all other directories, parent must exist
+    const parent = await this.getByPath(parentPath);
     if (!parent || parent.type !== 'directory') {
       throw new Error(`Parent directory not found: ${parentPath}`);
     }
 
     if (!this.canWrite(parent)) {
       throw new Error('Permission denied');
-    }
-
-    const path = this.joinPath(parentPath, name);
-    const existing = await this.getByPath(path);
-    
-    if (existing) {
-      throw new Error(`Directory already exists: ${path}`);
     }
 
     const directory: DirectoryNode = {
