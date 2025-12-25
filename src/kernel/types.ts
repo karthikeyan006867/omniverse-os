@@ -99,7 +99,10 @@ export type AppPermission =
   | 'ai.execute'
   | 'economy.transact'
   | 'system.admin'
-  | 'collaboration.sync';
+  | 'collaboration.sync'
+  | 'camera.access'
+  | 'microphone.access'
+  | 'storage.manage';
 
 export interface WindowConfig {
   defaultWidth: number;

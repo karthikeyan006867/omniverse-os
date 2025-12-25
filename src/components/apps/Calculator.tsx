@@ -81,11 +81,11 @@ export default function Calculator() {
   };
 
   const buttons = [
-    ['C', '±', '%', '÷'],
+    ['C', '←', '%', '÷'],
     ['7', '8', '9', '×'],
     ['4', '5', '6', '-'],
     ['1', '2', '3', '+'],
-    ['0', '.', '='],
+    ['±', '0', '.', '='],
   ];
 
   return (
@@ -110,7 +110,7 @@ export default function Calculator() {
               const isOperation = ['÷', '×', '-', '+', '%'].includes(btn);
               const isEquals = btn === '=';
               const isClear = btn === 'C';
-              const isZero = btn === '0';
+              const isBackspace = btn === '←';
               
               return (
                 <button
@@ -120,16 +120,18 @@ export default function Calculator() {
                     else if (btn === '=') handleEquals();
                     else if (btn === '.') handleDecimal();
                     else if (btn === '±') setDisplay(String(-parseFloat(display)));
+                    else if (btn === '←') handleBackspace();
                     else if (isOperation) handleOperation(btn);
                     else handleNumber(btn);
                   }}
                   className={`
                     py-4 rounded-lg font-semibold text-xl transition-colors
-                    ${isZero ? 'col-span-2' : ''}
                     ${isOperation || isEquals
                       ? 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
                       : isClear
                       ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : isBackspace
+                      ? 'bg-gray-600 hover:bg-gray-500 text-white'
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                     }
                   `}
@@ -140,13 +142,6 @@ export default function Calculator() {
             })}
           </div>
         ))}
-        
-        <button
-          onClick={handleBackspace}
-          className="col-span-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center gap-2"
-        >
-          <Delete size={20} /> Backspace
-        </button>
       </div>
     </div>
   );

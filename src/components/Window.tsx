@@ -10,6 +10,13 @@ import TextEditor from './apps/TextEditor';
 import Terminal from './apps/Terminal';
 import Calculator from './apps/Calculator';
 import TaskManager from './apps/TaskManager';
+import Calendar from './apps/Calendar';
+import TicTacToe from './apps/TicTacToe';
+import SnakeGame from './apps/SnakeGame';
+import Settings from './apps/Settings';
+import Camera from './apps/Camera';
+import MusicPlayer from './apps/MusicPlayer';
+import Paint from './apps/Paint';
 
 interface WindowProps {
   window: AppWindow;
@@ -26,9 +33,14 @@ const AppComponents: Record<string, React.ComponentType<any>> = {
   'Terminal': Terminal,
   'Calculator': Calculator,
   'Task Manager': TaskManager,
+  'Calendar': Calendar,
+  'Tic Tac Toe': TicTacToe,
+  'Snake': SnakeGame,
+  'Settings': Settings,
+  'Camera': Camera,
+  'Music Player': MusicPlayer,
+  'Paint': Paint,
   'Wallet': () => <div className="p-8 text-center text-gray-400">💰 Wallet - Coming Soon</div>,
-  'AI Assistant': () => <div className="p-8 text-center text-gray-400">🤖 AI Assistant - Coming Soon</div>,
-  'Settings': () => <div className="p-8 text-center text-gray-400">⚙️ Settings - Coming Soon</div>,
 };
 
 export default function Window({
