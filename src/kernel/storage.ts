@@ -136,7 +136,7 @@ class StorageManager {
 
   async clear<T extends keyof OmniverseDB>(store: T): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    await this.db.clear(store);
+    await this.db.clear(store as any);
   }
 
   // ============================================================================
