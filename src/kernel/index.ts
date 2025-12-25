@@ -41,13 +41,13 @@ export class Kernel {
       console.log('  [1/5] Initializing storage...');
       await storage.initialize();
 
-      // 2. Load or create user
-      console.log('  [2/5] Loading user...');
-      await this.loadUser(userId || 'demo-user');
+      // 2. Initialize file system (must be before user load)
+      console.log('  [2/5] Mounting file system...');
+      await vfs.initialize('system');
 
-      // 3. Initialize file system
-      console.log('  [3/5] Mounting file system...');
-      await vfs.initialize(this.currentUser!.id);
+      // 3. Load or create user
+      console.log('  [3/5] Loading user...');
+      await this.loadUser(userId || 'demo-user');
 
       // 4. Initialize process manager
       console.log('  [4/5] Starting process manager...');
